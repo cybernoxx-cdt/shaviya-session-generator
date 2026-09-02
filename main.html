@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHAVIYA-XMD BOT</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
+body{background:#020b1c;color:#fff;min-height:100vh;overflow-x:hidden;transition:.4s;}
+body.light{background:#f4f6fb;color:#111;}
+
+.container{max-width:1200px;margin:auto;padding:20px;position:relative;z-index:10;}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:20px;
+  padding:20px 0;
+}
+
+.logo-area{display:flex;align-items:center;gap:15px;}
+
+.theme-toggle{
+  width:50px;height:50px;border-radius:50%;
+  background:rgba(33,150,243,.2);
+  border:2px solid #2196f3;
+  color:#2196f3;
+  font-size:1.4rem;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+
+.logo-img{
+  width:80px;height:80px;
+  border-radius:50%;
+  border:3px solid #2196f3;
+  object-fit:cover;
+}
+
+.logo-text{
+  font-size:2.2rem;
+  font-weight:700;
+  background:linear-gradient(45deg,#2196f3,#64b5f6);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* Banner with new image */
+.banner{
+  width:100%;
+  height:auto;
+  min-height:250px;
+  margin:40px 0;
+  border-radius:15px;
+  background:url('https://files.catbox.moe/eqmiio.jpg') center/cover no-repeat;
+  background-color:#020b1c;
+  box-shadow:0 0 25px rgba(33,150,243,.6);
+  aspect-ratio: 16/9;
+}
+
+body.light .banner{
+  background-color:#f4f6fb;
+}
+
+/* Main buttons */
+.buttons{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:20px;
+  margin-bottom:40px;
+}
+
+.btn{
+  padding:15px 30px;
+  border-radius:50px;
+  background:linear-gradient(45deg,#2196f3,#42a5f5);
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  transition:transform 0.3s, box-shadow 0.3s;
+}
+
+.btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 20px rgba(33,150,243,0.3);
+}
+
+.features{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:30px;
+  margin-top:60px;
+}
+
+.feature-card{
+  padding:30px;
+  border-radius:20px;
+  background:linear-gradient(145deg,#0b1630,#0f2147);
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  transition:transform 0.3s;
+}
+
+.feature-card:hover{
+  transform:translateY(-5px);
+}
+
+.feature-card::before{
+  content:"";
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:5px;
+  background:linear-gradient(90deg,#00ff88,#00c853);
+  border-radius:20px 20px 0 0;
+}
+
+.feature-icon{
+  font-size:3rem;
+  color:#6fdcff;
+  margin-bottom:15px;
+}
+
+body.light .feature-card{
+  background:#fff;
+  color:#111;
+  box-shadow:0 10px 25px rgba(0,0,0,.12);
+}
+
+footer{
+  margin-top:60px;
+  text-align:center;
+  padding:20px;
+  color:#64b5f6;
+  font-size:1.1rem;
+}
+
+.snow-container{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+}
+
+.snowflake{
+  position:absolute;
+  top:-10px;
+  color:#64b5f6;
+  animation:fall linear forwards;
+}
+
+@keyframes fall{
+  to{transform:translateY(110vh);}
+}
+
+/* BOTTOM-RIGHT FLOATING MUSIC BUTTON */
+.floating-music-btn{
+  position:fixed;
+  bottom:30px;
+  right:30px;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  border:3px solid #4CAF50;
+  background:rgba(76, 175, 80, 0.2);
+  color:#4CAF50;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.8rem;
+  transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow:0 8px 25px rgba(0,0,0,0.4);
+  z-index:100;
+}
+
+.floating-music-btn:hover{
+  transform:translateY(-5px) scale(1.1);
+  box-shadow:0 12px 30px rgba(0,0,0,0.5);
+}
+
+.floating-music-btn:active{
+  transform:translateY(-2px) scale(0.98);
+  transition:all 0.1s;
+}
+
+/* Playing state - GREEN with ORANGE dot */
+.floating-music-btn.playing{
+  background:#4CAF50 !important;
+  color:#fff !important;
+  border-color:#4CAF50;
+  box-shadow:0 0 30px rgba(76, 175, 80, 0.8);
+  animation:pulse-green 2s infinite;
+}
+
+/* Stopped/Paused state - YELLOW with YELLOW dot */
+.floating-music-btn.stopped{
+  background:#FFC107 !important;
+  color:#000 !important;
+  border-color:#FFC107;
+  box-shadow:0 0 30px rgba(255, 193, 7, 0.8);
+  animation:pulse-yellow 2s infinite;
+}
+
+/* Status indicator dot - FLOATING */
+.status-dot{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  opacity:1;
+  transform:scale(1);
+  transition:all 0.3s ease;
+  z-index:101;
+  border:2px solid rgba(255,255,255,0.3);
+}
+
+.floating-music-btn.playing .status-dot{
+  background:#FF9800; /* Orange dot for playing */
+  box-shadow:0 0 12px #FF9800;
+  animation:pulse-dot-orange 1.5s infinite;
+}
+
+.floating-music-btn.stopped .status-dot{
+  background:#FFD700; /* Yellow dot for stopped */
+  box-shadow:0 0 12px #FFD700;
+  animation:pulse-dot-yellow 1.5s infinite;
+}
+
+@keyframes pulse-dot-orange{
+  0%{transform:scale(1); opacity:0.9;}
+  50%{transform:scale(1.3); opacity:0.7;}
+  100%{transform:scale(1); opacity:0.9;}
+}
+
+@keyframes pulse-dot-yellow{
+  0%{transform:scale(1); opacity:0.9;}
+  50%{transform:scale(1.3); opacity:0.7;}
+  100%{transform:scale(1); opacity:0.9;}
+}
+
+@keyframes pulse-green{
+  0%{box-shadow:0 0 20px rgba(76, 175, 80, 0.8);}
+  50%{box-shadow:0 0 30px rgba(76, 175, 80, 1);}
+  100%{box-shadow:0 0 20px rgba(76, 175, 80, 0.8);}
+}
+
+@keyframes pulse-yellow{
+  0%{box-shadow:0 0 20px rgba(255, 193, 7, 0.8);}
+  50%{box-shadow:0 0 30px rgba(255, 193, 7, 1);}
+  100%{box-shadow:0 0 20px rgba(255, 193, 7, 0.8);}
+}
+
+@media(max-width:768px){
+  .logo-text{font-size:1.5rem;}
+  .logo-img{width:60px;height:60px;}
+  .banner{
+    min-height:180px;
+    margin:20px 0;
+  }
+  .floating-music-btn{
+    width:65px;
+    height:65px;
+    font-size:1.6rem;
+    bottom:25px;
+    right:25px;
+  }
+}
+</style>
+</head>
+
+<body>
+<!-- BOTTOM-RIGHT FLOATING MUSIC BUTTON -->
+<button class="floating-music-btn" id="playToggleBtn">
+  <i class="fas fa-play"></i>
+  <div class="status-dot"></div>
+</button>
+
+<div class="snow-container" id="snow"></div>
+
+<div class="container">
+<header>
+  <div class="logo-area">
+    <button class="theme-toggle" id="themeBtn"><i class="fas fa-moon"></i></button>
+    <img src="https://raw.githubusercontent.com/Ranumithaofc/RANU-FILE-S-/refs/heads/main/images/alive%20boy%20img%20only.jpg" class="logo-img">
+    <div class="logo-text">SHAVIYA-XMD BOT</div>
+  </div>
+</header>
+
+<div class="banner"></div>
+
+<div class="buttons">
+  <a href="/pair" class="btn"><i class="fas fa-link"></i> Pair Now</a>
+  <a href="https://wa.me/94707085822" class="btn"><i class="fas fa-user"></i> Contact Owner</a>
+  <a href="https://dashboard.heroku.com/new?template=https://github.com/Ranumithaofc/RANUMITHA-X-MD" class="btn"><i class="fas fa-server"></i> Heroku</a>
+  <!-- Group & Channel buttons removed as requested -->
+</div>
+
+<section class="features">
+  <div class="feature-card">
+    <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+    <h3>Fast</h3>
+    <p>Ultra speed performance</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+    <h3>Secure</h3>
+    <p>Safe & protected</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon"><i class="fas fa-star"></i></div>
+    <h3>Premium</h3>
+    <p>Top quality service</p>
+  </div>
+</section>
+
+<footer>
+  &copy; SHAVIYA-XMD OFC
+</footer>
+</div>
+
+<script>
+/* 🎵 Music Player */
+const playlist=[
+  "https://github.com/Ranumithaofc/RANU-FILE-S-/raw/refs/heads/main/Audio/Mawenna%20official%20music%20video.%20Devi%20boy%20ft%20rashaa%20(%20%E0%B6%91%E0%B7%80%E0%B6%B1%E0%B6%B1%20%E0%B6%B8%E0%B7%80%E0%B6%B1%E0%B6%B1%20%E0%B7%84%E0%B6%AF%E0%B7%80%E0%B6%AD%20%E0%B6%AD%E0%B6%BB%E0%B6%9C%E0%B6%B1%E0%B6%B1%20)%20%23mawenna.mp3",
+  "https://github.com/Ranumithaofc/RANU-FILE-S-/raw/refs/heads/main/Audio/Smokio%20-%20Kamini%20(%E0%B6%9A%E0%B7%8F%E0%B6%B8%E0%B7%92%E0%B6%AB%E0%B7%93)%20Ft.@ramessesreezy%20&%20@thuggahchainmusic%20%5BProd.Zane98%5D%20%5BOfficial%20Music%20Video%5D.mp3",
+  "https://github.com/Ranumithaofc/RANU-FILE-S-/raw/refs/heads/main/Audio/AASHIQUI%202%20MASHUP%20FULL%20SONG%20%20KIRAN%20KAMATH%20%20BEST%20BOLLYWOOD%20MASHUPS.mp3",
+  "https://github.com/Ranumithaofc/RANU-FILE-S-/raw/refs/heads/main/Audio/Me%20Hitha%20Sanasa%20(%20%E0%B6%B8%20%E0%B7%84%E0%B6%AD%20%E0%B7%83%E0%B6%B1%E0%B7%83%20)%20-%20Uvindu%20Ayshcharya%20%20Lyrics%20Video.mp3"
+];
+
+let index = 0;
+const audio = new Audio(playlist[index]);
+audio.volume = 0.7; // Fixed volume
+let isPlaying = false;
+let isStopped = false;
+
+// Update toggle button state
+function updateToggleButton() {
+  const toggleBtn = document.getElementById('playToggleBtn');
+  
+  if (isPlaying) {
+    // Playing state - GREEN button with PAUSE icon and ORANGE dot
+    toggleBtn.classList.add('playing');
+    toggleBtn.classList.remove('stopped');
+    toggleBtn.innerHTML = '<i class="fas fa-pause"></i><div class="status-dot"></div>';
+  } else if (isStopped) {
+    // Stopped state - YELLOW button with PLAY icon and YELLOW dot
+    toggleBtn.classList.remove('playing');
+    toggleBtn.classList.add('stopped');
+    toggleBtn.innerHTML = '<i class="fas fa-play"></i><div class="status-dot"></div>';
+  } else {
+    // Paused state - YELLOW button with PLAY icon and YELLOW dot
+    toggleBtn.classList.remove('playing');
+    toggleBtn.classList.add('stopped');
+    toggleBtn.innerHTML = '<i class="fas fa-play"></i><div class="status-dot"></div>';
+  }
+}
+
+/* Loop Playlist */
+audio.addEventListener("ended", () => {
+  index = (index + 1) % playlist.length;
+  audio.src = playlist[index];
+  
+  // Smooth transition to next song
+  setTimeout(() => {
+    audio.play();
+    isPlaying = true;
+    isStopped = false;
+    updateToggleButton();
+  }, 300);
+});
+
+// Update button based on audio state
+audio.addEventListener("play", () => {
+  isPlaying = true;
+  isStopped = false;
+  updateToggleButton();
+});
+
+audio.addEventListener("pause", () => {
+  isPlaying = false;
+  // Check if it's actually stopped (at beginning)
+  if (audio.currentTime === 0) {
+    isStopped = true;
+  } else {
+    isStopped = false;
+  }
+  updateToggleButton();
+});
+
+/* 🌗 Theme Toggle */
+document.getElementById('themeBtn').onclick = () => {
+  document.body.classList.toggle("light");
+  const themeBtn = document.getElementById('themeBtn');
+  themeBtn.innerHTML = document.body.classList.contains("light")
+    ? '<i class="fas fa-sun"></i>'
+    : '<i class="fas fa-moon"></i>';
+};
+
+/* ❄ Snow Effect */
+setInterval(() => {
+  const s = document.createElement("div");
+  s.className = "snowflake";
+  s.innerText = "❄";
+  s.style.left = Math.random() * 100 + "vw";
+  s.style.fontSize = 14 + Math.random() * 12 + "px";
+  s.style.animationDuration = 5 + Math.random() * 3 + "s";
+  document.getElementById('snow').appendChild(s);
+  setTimeout(() => s.remove(), 8000);
+}, 120);
+
+/* Music Control - Single Toggle Button (Double click stops) */
+let lastClickTime = 0;
+document.getElementById('playToggleBtn').onclick = (e) => {
+  const currentTime = new Date().getTime();
+  const timeDiff = currentTime - lastClickTime;
+  
+  // Double click detection (within 300ms) -> STOP (reset to beginning)
+  if (timeDiff < 300 && timeDiff > 0) {
+    audio.pause();
+    audio.currentTime = 0;
+    isPlaying = false;
+    isStopped = true;
+    updateToggleButton();
+    lastClickTime = 0;
+    return;
+  }
+  
+  lastClickTime = currentTime;
+  
+  // Single click - PLAY/PAUSE toggle
+  setTimeout(() => {
+    if (lastClickTime === currentTime) {
+      if (isPlaying) {
+        // If currently playing, pause it
+        audio.pause();
+        isPlaying = false;
+        isStopped = false; // paused but not at start
+      } else {
+        // If stopped/paused, play it
+        if (isStopped) {
+          audio.currentTime = 0; // Start from beginning if stopped
+        }
+        audio.play().catch(error => {
+          console.log("Play was prevented:", error);
+        });
+        isPlaying = true;
+        isStopped = false;
+      }
+      updateToggleButton();
+    }
+  }, 300);
+};
+
+/* Initial UI setup - no welcome modal (group/channel removed) */
+window.onload = function() {
+  // Set initial button appearance based on audio state (not playing yet)
+  updateToggleButton();
+  
+  // Ensure audio starts from beginning on first play if needed
+  audio.currentTime = 0;
+  isStopped = true;
+  updateToggleButton();
+};
+
+// Small extra: ensure audio object doesn't autoplay aggressively, 
+// user must interact via music button (touch/click)
+</script>
+</body>
+</html>
