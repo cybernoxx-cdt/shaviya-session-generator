@@ -3,6 +3,9 @@
     "version": "0.0.1",
     "description": "A multi functional whatsapp bot Web paircode.",
     "main": "index.js",
+    "engines": {
+      "node": ">=20.0.0"
+    },
     "scripts": {
       "start": "pm2 start index.js --deep-monitoring --attach --name RANUMITHA-X-MD",
       "stop": "pm2 stop SHAVIYA-XMD",
