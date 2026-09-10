@@ -1,10 +1,16 @@
 # Use a supported and up-to-date base image
-FROM node:lts-bullseye
+# (bullseye's Debian security repo is past its support window and its
+#  InRelease file no longer refreshes, which breaks "apt-get update" -
+#  bookworm is the current stable release and is actively maintained)
+FROM node:lts-bookworm
 
 # Install required system packages
-RUN apt-get update && \
-    apt-get install -y ffmpeg imagemagick webp && \
+# --allow-releaseinfo-change lets apt accept a repo suite/codename update
+# without failing the build; harmless to keep even once bookworm is current.
+RUN apt-get update --allow-releaseinfo-change && \
+    apt-get install -y --no-install-recommends ffmpeg imagemagick webp && \
     apt-get upgrade -y && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set working directory
