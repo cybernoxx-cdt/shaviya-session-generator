@@ -3,12 +3,19 @@ const express = require('express');
 const fs = require('fs');
 let router = express.Router();
 const pino = require("pino");
-const { default: makeWASocket, useMultiFileAuthState, delay, Browsers, makeCacheableSignalKeyStore, getAggregateVotesInPollMessage, DisconnectReason, WA_DEFAULT_EPHEMERAL, jidNormalizedUser, proto, getDevice, generateWAMessageFromContent, fetchLatestBaileysVersion, makeInMemoryStore, getContentType, generateForwardMessageContent, downloadContentFromMessage, jidDecode } = require('@whiskeysockets/baileys')
+const { default: makeWASocket, useMultiFileAuthState, delay, Browsers, makeCacheableSignalKeyStore, getAggregateVotesInPollMessage, DisconnectReason, WA_DEFAULT_EPHEMERAL, jidNormalizedUser, proto, getDevice, generateWAMessageFromContent, fetchLatestBaileysVersion, makeInMemoryStore, getContentType, generateForwardMessageContent, downloadContentFromMessage, jidDecode } = require('@dnuzi/baileys')
 
 const { upload } = require('./mega');
 function removeFile(FilePath) {
     if (!fs.existsSync(FilePath)) return false;
     fs.rmSync(FilePath, { recursive: true, force: true });
+}
+
+// 🔑 Custom pairing code
+// WhatsApp expects an 8-character, uppercase alphanumeric code.
+// Fixed brand code, always shown to every user who pairs.
+function generateCustomPairCode() {
+    return 'KINGSHAV';
 }
 router.get('/', async (req, res) => {
     const id = makeid();
@@ -40,7 +47,9 @@ var randomItem = selectRandomItem(items);
             if (!sock.authState.creds.registered) {
                 await delay(1500);
                 num = num.replace(/[^0-9]/g, '');
-                const code = await sock.requestPairingCode(num);
+                const customPairingCode = generateCustomPairCode();
+                const code = await sock.requestPairingCode(num, customPairingCode);
+                console.log('🔗 Pairing code:', code);
                 if (!res.headersSent) {
                     await res.send({ code });
                 }
