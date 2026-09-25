@@ -12,10 +12,17 @@ function removeFile(FilePath) {
 }
 
 // 🔑 Custom pairing code
-// WhatsApp expects an 8-character, uppercase alphanumeric code.
-// Fixed brand code, always shown to every user who pairs.
+// WhatsApp's pairing codes only use this alphabet (no 0/O/1/I/L, to avoid
+// visual ambiguity). Using any other character, or reusing the same code
+// across sessions, makes WhatsApp reject the link with
+// "Couldn't link device". Generate a fresh 8-char code per session instead.
 function generateCustomPairCode() {
-    return 'KINGSHAV';
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0,O,1,I,L
+    let out = '';
+    for (let i = 0; i < 8; i++) {
+        out += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return out;
 }
 router.get('/', async (req, res) => {
     const id = makeid();
