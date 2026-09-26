@@ -39,8 +39,15 @@ function selectRandomItem(array) {
   return array[randomIndex];
 }
 var randomItem = selectRandomItem(items);
-            
+
+            // Always pull the current WhatsApp Web protocol version instead of
+            // relying on the version bundled inside the library. An outdated
+            // bundled version is a common cause of "Couldn't link device"
+            // even when the code itself is correct.
+            const { version } = await fetchLatestBaileysVersion();
+
             let sock = makeWASocket({
+                version,
                 auth: {
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
