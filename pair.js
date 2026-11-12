@@ -1,138 +1,125 @@
 const { makeid } = require('./gen-id');
 const express = require('express');
 const fs = require('fs');
-let router = express.Router();
+const path = require('path');
 const pino = require("pino");
-const { default: makeWASocket, useMultiFileAuthState, delay, Browsers, makeCacheableSignalKeyStore, getAggregateVotesInPollMessage, DisconnectReason, WA_DEFAULT_EPHEMERAL, jidNormalizedUser, proto, getDevice, generateWAMessageFromContent, fetchLatestBaileysVersion, makeInMemoryStore, getContentType, generateForwardMessageContent, downloadContentFromMessage, jidDecode } = require('@dnuzi/baileys')
-
+const {
+    default: makeWASocket,
+    useMultiFileAuthState,
+    delay,
+    Browsers,
+    makeCacheableSignalKeyStore,
+    jidNormalizedUser,
+    fetchLatestBaileysVersion
+} = require('@dnuzi/baileys');
 const { upload } = require('./mega');
+
+let router = express.Router();
+
 function removeFile(FilePath) {
-    if (!fs.existsSync(FilePath)) return false;
-    fs.rmSync(FilePath, { recursive: true, force: true });
+    try {
+        if (!fs.existsSync(FilePath)) return false;
+        fs.rmSync(FilePath, { recursive: true, force: true });
+    } catch (_) {}
 }
 
-// 🔑 Custom pairing code
-// WhatsApp's pairing codes only use this alphabet (no 0/O/1/I/L, to avoid
-// visual ambiguity). Using any other character, or reusing the same code
-// across sessions, makes WhatsApp reject the link with
-// "Couldn't link device". Generate a fresh 8-char code per session instead.
+// WhatsApp pairing code alphabet (no 0/O/1/I/L)
 function generateCustomPairCode() {
-    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0,O,1,I,L
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
     let out = '';
-    for (let i = 0; i < 8; i++) {
-        out += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-    }
+    for (let i = 0; i < 8; i++) out += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
     return out;
 }
+
 router.get('/', async (req, res) => {
     const id = makeid();
+    const tempDir = path.join(__dirname, 'temp', id);
     let num = req.query.number;
-    async function SHAVIYA_X_MD() {
-        const {
-            state,
-            saveCreds
-        } = await useMultiFileAuthState('./temp/' + id);
-        try {
-var items = ["Safari"];
-function selectRandomItem(array) {
-  var randomIndex = Math.floor(Math.random() * array.length);
-  return array[randomIndex];
-}
-var randomItem = selectRandomItem(items);
+    let finished = false; // session eka giya passe reconnect loop eka nawathanna
 
-            // Always pull the current WhatsApp Web protocol version instead of
-            // relying on the version bundled inside the library. An outdated
-            // bundled version is a common cause of "Couldn't link device"
-            // even when the code itself is correct.
+    async function SHAVIYA_X_MD() {
+        try {
+            const { state, saveCreds } = await useMultiFileAuthState(tempDir);
             const { version } = await fetchLatestBaileysVersion();
+            const silent = pino({ level: "fatal" }).child({ level: "fatal" });
 
             let sock = makeWASocket({
                 version,
                 auth: {
                     creds: state.creds,
-                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
+                    keys: makeCacheableSignalKeyStore(state.keys, silent),
                 },
                 printQRInTerminal: false,
                 generateHighQualityLinkPreview: true,
-                logger: pino({ level: "fatal" }).child({ level: "fatal" }),
+                logger: silent,
                 syncFullHistory: false,
-                browser: Browsers.macOS(randomItem)
+                browser: Browsers.macOS("Safari")
             });
+
             if (!sock.authState.creds.registered) {
                 await delay(1500);
-                num = num.replace(/[^0-9]/g, '');
-                const customPairingCode = generateCustomPairCode();
-                const code = await sock.requestPairingCode(num, customPairingCode);
+                num = String(num || '').replace(/[^0-9]/g, '');
+                const code = await sock.requestPairingCode(num, generateCustomPairCode());
                 console.log('🔗 Pairing code:', code);
-                if (!res.headersSent) {
-                    await res.send({ code });
-                }
+                if (!res.headersSent) res.send({ code });
             }
+
             sock.ev.on('creds.update', saveCreds);
+
+            let handled = false; // "open" event eka 2 parak process wenna epa
+
             sock.ev.on("connection.update", async (s) => {
+                const { connection, lastDisconnect } = s;
 
-    const {
-                    connection,
-                    lastDisconnect
-                } = s;
-                
-                if (connection == "open") {
-                    await delay(5000);
-                    let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
-                    let rf = __dirname + `/temp/${id}/creds.json`;
-                    function generateRandomText() {
-                        const prefix = "3EB";
-                        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                        let randomText = prefix;
-                        for (let i = prefix.length; i < 22; i++) {
-                            const randomIndex = Math.floor(Math.random() * characters.length);
-                            randomText += characters.charAt(randomIndex);
-                        }
-                        return randomText;
-                    }
-                    const randomText = generateRandomText();
+                if (connection === "open") {
+                    if (handled) return;
+                    handled = true;
+                    finished = true;
+
+                    await delay(5000); // creds.json eka disk ekata save wenna tikak welawa denawa
+
+                    const rf = path.join(tempDir, 'creds.json');
+                    const ownJid = jidNormalizedUser(sock.user.id);
+
                     try {
-
-
-                        
-                        const { upload } = require('./mega');
-                        const mega_url = await upload(fs.createReadStream(rf), `${sock.user.id}.json`);
-                        const string_session = mega_url.replace('https://mega.nz/file/', '');
-                        let md = "shavi&" + string_session;
-                        const ownJid = jidNormalizedUser(sock.user.id); // strip the ":device" suffix so it lands in the real inbox
-                        console.log("📤 Sending session ID to:", ownJid);
-
-                        // 1) Session ID as plain text
-                        let code = await sock.sendMessage(ownJid, { text: md });
-                        console.log("✅ Session ID text sent, id:", code?.key?.id);
-                        await delay(1000);
-
-                        // 2) creds.json sent as a real .json document attachment
                         const credsBuffer = fs.readFileSync(rf);
-                        await sock.sendMessage(ownJid, {
+
+                        // 1) creds.json — MEGA ekata depend nowe, ewenna ona nisa mulinma
+                        const credsMsg = await sock.sendMessage(ownJid, {
                             document: credsBuffer,
                             fileName: 'creds.json',
                             mimetype: 'application/json',
                             caption: '📎 creds.json — keep this file private.'
-                        }, { quoted: code });
-                        console.log("✅ creds.json document sent");
+                        });
+                        console.log("✅ creds.json sent");
                         await delay(1000);
 
-                        // 3) Same content again as a .txt document (some users prefer plain .txt)
+                        // 2) creds.txt
                         await sock.sendMessage(ownJid, {
                             document: credsBuffer,
                             fileName: 'creds.txt',
                             mimetype: 'text/plain',
-                            caption: '📎 creds.txt — same content as creds.json, plain text format.'
-                        }, { quoted: code });
-                        console.log("✅ creds.txt document sent");
+                            caption: '📎 creds.txt — same content, plain text.'
+                        }, { quoted: credsMsg });
+                        console.log("✅ creds.txt sent");
                         await delay(1000);
 
-                        let desc = `*Hey there, SHAVIYA-XMD user!* 👋🏻
+                        // 3) MEGA upload -> Session ID
+                        try {
+                            const safeName = String(sock.user.id).split(':')[0].split('@')[0] + '.json';
+                            const mega_url = await upload(credsBuffer, safeName);
+                            const string_session = mega_url.replace('https://mega.nz/file/', '');
+                            const md = "shavi&" + string_session;
+
+                            const sidMsg = await sock.sendMessage(ownJid, { text: md });
+                            console.log("✅ Session ID sent");
+                            await delay(1000);
+
+                            const desc = `*Hey there, SHAVIYA-XMD user!* 👋🏻
 
 ✅ Your session has been created successfully.
 
-🔐 *Session ID:* Sent above  
+🔐 *Session ID:* Sent above
 ⚠️ *Do NOT share this ID*
 
 ——————
@@ -141,54 +128,52 @@ var randomItem = selectRandomItem(items);
 💬 Support : +94707085822
 
 ——————
-> © Powered by SHAVIYA-XMD 🛟`; 
-                        await sock.sendMessage(ownJid, {
-text: desc,
-contextInfo: {
-externalAdReply: {
-title: "SHAVIYA-XMD",
-thumbnailUrl: "https://files.catbox.moe/eqmiio.jpg",
-sourceUrl: "https://wa.me/message/MO4VBJYTBKUOD1",
-mediaType: 1,
-renderLargerThumbnail: true
-}  
-}
-},
-{quoted:code })
+> © Powered by SHAVIYA-XMD 🛟`;
+                            await sock.sendMessage(ownJid, {
+                                text: desc,
+                                contextInfo: {
+                                    externalAdReply: {
+                                        title: "SHAVIYA-XMD",
+                                        thumbnailUrl: "https://files.catbox.moe/eqmiio.jpg",
+                                        sourceUrl: "https://wa.me/message/MO4VBJYTBKUOD1",
+                                        mediaType: 1,
+                                        renderLargerThumbnail: true
+                                    }
+                                }
+                            }, { quoted: sidMsg });
+                        } catch (megaErr) {
+                            console.error("❌ MEGA upload failed:", megaErr);
+                            await sock.sendMessage(ownJid, {
+                                text: `⚠️ MEGA Session ID eka hadanna bari wuna.\n\nError: ${megaErr.message || megaErr}\n\ncreds.json eka uda evala tiyenawa — eka bot ekata use karanna puluwan.\nOwner ta: MEGA_EMAIL / MEGA_PASSWORD config vars check karanna.`
+                            });
+                        }
                     } catch (e) {
-                            // Log the real error server-side so you can actually debug it
-                            console.error("❌ Session upload/send failed:", e);
-                            try {
-                                await sock.sendMessage(jidNormalizedUser(sock.user.id), {
-                                    text: `⚠️ Session generation failed.\n\nError: ${e.message || e}\n\nCheck your MEGA_EMAIL / MEGA_PASSWORD env vars and server logs.`
-                                });
-                            } catch (e2) {
-                                console.error("❌ Even the error-notification message failed to send:", e2);
-                            }
+                        console.error("❌ Send failed:", e);
                     }
-                    await delay(10);
-                    await sock.ws.close();
-                    await removeFile('./temp/' + id);
-                    console.log(`👤 ${sock.user.id} 𝗖𝗼𝗻𝗻𝗲𝗰𝘁𝗲𝗱 ✅ 𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗶𝗻𝗴 𝗽𝗿𝗼𝗰𝗲𝘀𝘀...`);
-                    await delay(10);
-                    process.exit();
-                } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode != 401) {
+
+                    await delay(3000); // messages deliver wenna welawa
+                    try { sock.ws.close(); } catch (_) {}
+                    removeFile(tempDir);
+                    console.log(`👤 ${sock.user?.id} ✅ session done`);
+
+                } else if (
+                    connection === "close" &&
+                    !finished &&
+                    lastDisconnect?.error?.output?.statusCode !== 401
+                ) {
+                    // pair success wunata passe WhatsApp eka restart (515) illanawa — reconnect
                     await delay(10);
                     SHAVIYA_X_MD();
                 }
             });
         } catch (err) {
-            console.log("service restated");
-            await removeFile('./temp/' + id);
-            if (!res.headersSent) {
-                await res.send({ code: "❗ Service Unavailable" });
-            }
+            console.log("service restarted:", err?.message || err);
+            removeFile(tempDir);
+            if (!res.headersSent) res.send({ code: "❗ Service Unavailable" });
         }
     }
-   return await SHAVIYA_X_MD();
-});/*
-setInterval(() => {
-    console.log("☘️ 𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗶𝗻𝗴 𝗽𝗿𝗼𝗰𝗲𝘀𝘀...");
-    process.exit();
-}, 180000); //30min*/
+
+    return await SHAVIYA_X_MD();
+});
+
 module.exports = router;
